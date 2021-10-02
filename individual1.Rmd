@@ -1,0 +1,195 @@
+---
+title: "individual1-lab3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+data <- readxl::read_xls('GSS.xls')
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+```
+Cleaning data
+```{r}
+data$`Highest year of school completed` <- as.numeric(data$`Highest year of school completed`)
+data$`Age of respondent` <- as.numeric(data$`Age of respondent`)
+data$`R's age when 1st child born` <- as.numeric(data$`R's age when 1st child born`)
+data$`Number of children` <- as.numeric(data$`Number of children`)
+data <- data %>% na.omit
+```
+
+### Problem 1
+```{r}
+data <- rename(data, 'Happiness' = 'General happiness')
+data <- rename(data, 'Party' = 'Political party affiliation')
+data <- rename(data, 'Income'='Respondents income')
+data <- rename(data, 'People'='Number of persons in household')
+data <- rename(data, 'Sex' = 'Respondents sex')
+data <- rename(data, 'Major' = 'College major 1')
+data <- rename(data, 'Education'='Highest year of school completed')
+data <- rename(data, 'Parent.age'="R's age when 1st child born")
+data <- rename(data, 'Age'='Age of respondent')
+data <- rename(data, 'Children'='Number of children')
+data <- rename(data, 'Marital.status' = 'Marital status')
+data <- rename(data, 'ID' = 'Respondent id number')
+data <- rename(data, 'Ballot' = 'Ballot used for interview')
+data <- rename(data, 'Year'='Gss year for this respondent')
+data <- rename(data, 'Rent' = 'Does r own or rent home?')
+
+#data %>% group_by(Marital.status %>% summarise(count = n(), mean = mean(Education)), )
+data %>% group_by(Marital.status) %>% summarise(ed = mean(Education)) %>% arrange(ed)
+```
+
+Observe the mean years of education arranged in a table by marital status.
+
+```{r}
+data %>% group_by(Marital.status) %>% summarise(ed = mean(Education)) %>% ggplot(aes(x=reorder(Marital.status, ed), weight=ed))+geom_bar(show.legend = FALSE) + xlab('Marital Status') + ylab('Average Years of Education')
+```
+
+We can observe that those who are married had the highest average years of schooling of those who answered. Widowed individuals had the lowest average years of education. Something which can be seen as absurd is that the chart also shows that those with no answer had the highest average schooling, 
+
+### Problem 2
+
+```{r}
+frame <- data %>% group_by(Marital.status) %>% filter(Education > mean(Education))
+str(frame)
+
+```
+
+```{R}
+library('dplyr')
+library('ggplot2')
+```
+
+
+### Problem 3
+
+```{r}
+temp <- data[, c(3, 4, 13)]
+marry<- filter(temp, Marital.status == "Married")
+non_marry <- filter(temp, Marital.status != "Married")
+
+new_happy <- filter(data, Happiness == "Very happy" | Happiness == "Pretty happy")
+new_unhappy <- filter(data, Happiness != "Very happy" & Happiness != "Pretty happy")
+```
+
+```{R}
+new_marry = aggregate(marry$Marital.status, by=list(marry$Happiness), FUN=length)
+marry_happy <- filter(temp, Marital.status == "Married" & (Happiness == "Very happy" | Happiness == "Pretty happy"))
+marry_unhappy <- filter(temp, Marital.status == "Married" & (Happiness != "Very happy" & Happiness != "Pretty happy"))
+
+
+
+new_non_marry = aggregate(non_marry$Marital.status, by=list(non_marry$Happiness), FUN=length)
+non_marry_happy <- filter(temp, Marital.status != "Married" & (Happiness == "Very happy" | Happiness == "Pretty happy"))
+non_marry_unhappy <- filter(temp, Marital.status != "Married" & (Happiness != "Very happy" & Happiness != "Pretty happy"))
+```
+
+We can observe that people who are married tend to be happier than people who are not married.
+
+
+```{R}
+p <- ggplot(new_marry, aes(x = Group.1, weight = x)) + geom_bar()
+p + xlab("Happiness") + ylab("Number of People") + ggtitle("Plot of Happiness for Married People")
+```
+```{R}
+p1 <- ggplot(new_non_marry, aes(x = Group.1, weight = x)) + geom_bar()
+p1 + xlab("Happiness") + ylab("Number of People") + ggtitle("Plot of Happiness for Non - Married People")
+```
+
+### Problem 4
+
+```{R}
+
+unique(new_happy$Party)
+
+new_indephappy <- new_happy %>%
+  group_by(Marital.status) %>%
+  filter(Party == "Independent" | Party == "Ind,near rep" | Party == "Ind,near dem")
+new_indephappy
+df1 <- new_indephappy %>%
+  summarize(
+    total_indephappy=n()
+  )
+df1
+
+new_indepunhappy <- new_unhappy %>%
+  group_by(Marital.status) %>%
+  filter(Party == "Independent" | Party == "Ind,near rep" | Party == "Ind,near dem")
+new_indepunhappy
+df2 <- new_indepunhappy %>%
+  summarize(
+    total_indepunhappy=n()
+  )
+df2
+
+new_rephappy <- new_happy %>%
+  group_by(Marital.status) %>%
+  filter(Party == "Strong republican" | Party == "Not str republican")
+new_indephappy
+t1 <- new_rephappy %>%
+  summarize(
+    total_rephappy=n()
+  )
+t1
+
+new_repunhappy <- new_unhappy %>%
+  group_by(Marital.status) %>%
+  filter(Party == "Strong republican" | Party == "Not str republican")
+new_repunhappy
+t2 <- new_repunhappy %>%
+  summarize(
+    total_repunhappy=n()
+  )
+t2
+
+new_demhappy <- new_happy %>%
+  group_by(Marital.status) %>%
+  filter(Party == "Strong democrat" | Party == "Not str democrat")
+new_demhappy
+t3 <- new_demhappy %>%
+  summarize(
+    total_demhappy=n()
+  )
+t3
+
+new_demunhappy <- new_unhappy %>%
+  group_by(Marital.status) %>%
+  filter(Party == "Strong democrat" | Party == "Not str democrat")
+new_demunhappy
+t4 <- new_demunhappy %>%
+  summarize(
+    total_demunhappy=n()
+  )
+t4
+
+ggplot(new_indephappy, aes(x=Party)) + geom_bar(color="black", fill="yellow")
+ggplot(new_indepunhappy, aes(x=Party)) + geom_bar(color="black", fill="yellow")
+ggplot(new_rephappy, aes(x=Party)) + geom_bar(color="black", fill="red")
+ggplot(new_repunhappy, aes(x=Party)) + geom_bar(color="black", fill="red")
+ggplot(new_demhappy, aes(x=Party)) + geom_bar(color="black", fill="blue")
+ggplot(new_demunhappy, aes(x=Party)) + geom_bar(color="black", fill="blue")
+
+
+
+
+```
+<p>
+We can observe that party doesn't affect the relationship we found in the last question. Overall, there tend to be more happy people than unhappy people. 
+</p>
+
+
+
+
+### Problem 5
+
+#### Find out how income affects the ownership of an individual's home (i.e. owns or rents).
+
+```{r}
+
+ggplot(data, aes(x = Rent)) + geom_bar() + coord_flip() + facet_wrap( ~ Income) + xlab('No. of Individuals') + ylab('Categotry of Home Ownership') + ggtitle('The No. of Individuals in each Housing and Income Bracket')
+
+```
+
+We observe that people the most people who buy a house have a income of $250000 or more. However, people with low income also consider owning or buying a house. This gives us an idea that many people might see buying a house as a long term investment which can be passed down to many generations. At the same time, we can't generalize these observations since a significant amount of people chose not to answer in this survey.
